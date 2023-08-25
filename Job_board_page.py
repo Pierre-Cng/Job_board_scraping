@@ -1,12 +1,14 @@
-import os
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
-from dotenv import load_dotenv
+from environs import Env
 import time
+
+
+
 
 # Loading .env variables 
 load_dotenv()
