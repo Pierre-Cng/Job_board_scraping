@@ -1,0 +1,4 @@
+project_env/
+*.pdf
+job_url.txt
+.env 

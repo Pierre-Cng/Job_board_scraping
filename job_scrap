@@ -1,0 +1,57 @@
+from dotenv import load_dotenv
+
+from selenium.common import NoSuchElementException, ElementNotInteractableException
+from bs4 import BeautifulSoup as bs
+import os
+import requests
+import time
+
+
+# Accessing variables in .env file.
+
+
+
+
+
+time.sleep(2)
+
+search = driver.find_element(By.ID, 'search')
+search.send_keys("software")
+search.send_keys(u'\ue007')
+
+time.sleep(1)
+
+html = driver.page_source
+soup = bs(html, 'html.parser')
+
+'''
+
+'''
+for element in jobs:
+    if element.is_displayed():
+        #element.click()
+        url = element['href'] #url = driver.current_url
+        file = open('job_url.txt', 'w')
+        file.write(url + '/n')
+        file.close()
+'''
+
+'''jobs = soup.find_all("a", {"class": TBD})
+
+file = open('job_url.txt', 'w')
+
+print(f'There is {len(jobs)} jobs found \n')
+
+for item in jobs:
+    url = item['href']
+    file.write(url + '\n')
+    print(f'{url} was added in the file \n')
+    
+file.close()
+'''
+'''
+for item in soup.find_all(By.CLASS_NAME, TBD):
+    src= item["href"]
+    print(src)
+
+'''
