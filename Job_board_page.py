@@ -5,22 +5,12 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 from environs import Env
-import time
-
-
-
 
 # Loading .env variables 
-load_dotenv()
-url = os.getenv('URL')
-cv_path = os.getenv('CV')
-name = os.getenv('NAME')
-email = os.getenv('EMAIL')
-phone = os.getenv('PHONE')
-company = os.getenv('ORG')
-linkedIn = os.getenv('LINKEDIN')
-portfolio = os.getenv('GITHUB')
-website = os.getenv('WEBSITE')
+env = Env()
+env.read_env() 
+app_website = env.dict("APPLICATION_SITE", subcast_values=str)  
+candidate_info = env.dict("CANDIDATE_INFO", subcast_values=str)  
 
 class Job_board_page:
     '''
@@ -38,79 +28,63 @@ class Job_board_page:
         self.driver.get(url)
         return self.driver
     
-    def reject_cookies(self, driver, id_handle):
-            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, id_handle)))
-            driver.find_element(By.ID, id_handle).click()
-            WebDriverWait(driver, 5).until(EC.invisibility_of_element((By.ID, id_handle)))
+    def click(self, driver, By_type, name):
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By_type, name)))
+        driver.find_element(By_type, name).click()
+
+    def send_keys(self, driver, By_type, name, keys):
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By_type, name)))
+        driver.find_element(By_type, name).send_keys(keys)
+
+    def select_choice(self, driver, By_type, name, option):
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By_type, name)))
+        Select(driver.find_element(By_type, name)).select_by_visible_text(option)
     
-    def goto_apply(self, driver=None):
-        if driver is None:
-             driver = self.driver
+    def reject_cookies(self, driver, By_type, name):
+            self.click(driver, By_type, name)
+            WebDriverWait(driver, 5).until(EC.invisibility_of_element((By_type, name)))
+
+    def goto_apply(self, driver, app_dict):
         try:                 
-            self.reject_cookies(driver, TBD)
+            self.reject_cookies(driver, By.ID, app_dict.get('reject_id'))
         except:
-            pass
-        
-        apply_xpath = TBD
-        driver.find_element(By.XPATH, apply_xpath).click()
+            pass  
+        self.click(driver, By.XPATH, app_dict.get('apply_xpath')) 
         driver.switch_to.window(driver.window_handles[1])
     
-    def upload_file(self, cv_path, driver=None):
-        if driver is None:
-             driver = self.driver 
-        upload_input_xpath = TBD
-        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, upload_input_xpath)))
-        driver.find_element(By.XPATH, upload_input_xpath).send_keys(cv_path)
-    
-    def fil_up_field(self, name, value, driver = None):
-        if driver is None:
-             driver = self.driver
-        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.NAME, name)))
-        driver.find_element(By.NAME, name).send_keys(value)
-
-    def select_choice(self, name, option, driver = None):
-        if driver is None:
-            driver = self.driver
-        select_element = driver.find_element(By.NAME, name)
-        select = Select(select_element)
-        select.select_by_visible_text(option)
-        '''https://www.selenium.dev/documentation/webdriver/support_features/select_lists/'''
-    
-    def radio_click(self, driver=None):
-        if driver is None:
-            driver = self.driver
-        choices = driver.find_elements(By.NAME, TBD)
-        choices[0].click()
+    def upload_file(self, driver, app_dict, candidate_dict):
+        self.send_keys(driver, By.XPATH, app_dict.get('upload_input_xpath'), candidate_dict.get('cv_path'))
         
-
+    def radio_click(self, driver, By_type, name, choice):
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By_type, name)))
+        driver.find_element(By.CSS_SELECTOR, f'[name="{name}"][value={choice}]').click()
     
-    def full_application(self, url, cv_path):
-        self.page_loader(url)
-        self.goto_apply()
+    def full_application(self, app_dict, candidate_dict):
+        self.page_loader(app_dict.get('url'))
+        self.goto_apply(self.driver, app_dict)
 
-        # SUBMIT YOUR APPLICATION section
-        self.upload_cv(cv_path)
-        self.fil_up_field('name', TBD)
-        self.fil_up_field('email', TBD)
-        self.fil_up_field('phone', TBD)
-        self.fil_up_field('org', TBD)
+        self.upload_file(self.driver, app_dict, candidate_dict)
 
-        # LINKS section
-        self.fil_up_field('urls[LinkedIn]', TBD)
-        self.fil_up_field('urls[Portfolio]', TBD)
-        self.fil_up_field('urls[Other]', TBD)
-
-        # LUCID STANDARD QUESTIONS section
+        for field in ['name', 'email', 'phone', 'org']:
+            self.send_keys(self.driver, By.NAME, field, candidate_dict.get(field))
+        
+        for field in ['LinkedIn', 'Portfolio', 'Other']:
+            self.send_keys(self.driver, By.NAME, f'urls[{field}]', candidate_dict.get(field))
+    
         for i in range(5):
             answer = ['Yes', 'No', 'No', 'No', 'Masters Degree'][i]
-            self.select_choice(f'TBD{i}]', answer)
-        self.radio_click()
+            self.select_choice(self.driver, By.NAME, app_dict.get('field_name') % i, answer)
+        
+        self.reject_cookies(self.driver, By.XPATH, app_dict.get('dismiss_xpath'))
+        self.radio_click(self.driver, By.NAME, app_dict.get('field_name') % 5, 'Yes')
 
         # NEWARK RELOCATION section
-        self.short_answer()
-        
+        self.send_keys(self.driver, By.NAME, app_dict.get('short_answer_name') % 0, candidate_dict.get('relocation'))
+        self.send_keys(self.driver, By.NAME, 'comments', candidate_dict.get('comment'))
+        for field in ['gender', 'race', 'veteran']:
+            self.select_choice(self.driver, By.NAME, f'eeo[{field}]', candidate_dict.get(field))
+        self.click(self.driver, By.XPATH, app_dict.get('checkbox_xpath'))
+        self.click(self.driver, By.XPATH, app_dict.get('submit_xpath'))
 
 jb = Job_board_page()
-url = TBD
-path = TBD
-jb.full_application(url, path)
+jb.full_application(app_website, candidate_info)
