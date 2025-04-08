@@ -81,14 +81,16 @@ class Job_board_page:
         
         self.reject_cookies(self.driver, By.XPATH, app_dict.get('dismiss_xpath'))
         self.radio_click(self.driver, By.NAME, app_dict.get('field_name') % 5, 'Yes')
+        self.radio_click(self.driver, By.NAME, app_dict.get('field_name') % 6, 'Yes')
 
-        # NEWARK RELOCATION section
-        self.send_keys(self.driver, By.NAME, app_dict.get('short_answer_name') % 0, candidate_dict.get('relocation'))
+        #self.send_keys(self.driver, By.NAME, app_dict.get('short_answer_name') % 0, candidate_dict.get('relocation'))
         self.send_keys(self.driver, By.NAME, 'comments', candidate_dict.get('comment'))
         for field in ['gender', 'race', 'veteran']:
             self.select_choice(self.driver, By.NAME, f'eeo[{field}]', candidate_dict.get(field))
         self.click(self.driver, By.XPATH, app_dict.get('checkbox_xpath'))
         self.click(self.driver, By.XPATH, app_dict.get('submit_xpath'))
 
-jb = Job_board_page()
-jb.full_application(app_website, candidate_info)
+links = open('job_url.txt').readlines()
+for link in links:
+    app_website['url'] = link.strip()
+    Job_board_page().full_application(app_website, candidate_info)
